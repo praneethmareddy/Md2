@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, IconButton, useColorMode, useToast } from "@chakra-ui/react";
+import { Box, IconButton } from "@chakra-ui/react";
 import { CopyIcon, CheckIcon } from "@chakra-ui/icons";
 
 const parseTemplate = (raw: string) => {
@@ -32,38 +32,28 @@ interface MessageDisplay2Props {
 
 const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
   const [copied, setCopied] = useState(false);
-  const { colorMode } = useColorMode();
-  const toast = useToast();
-
-  const isDark = colorMode === "dark";
   const sections = parseTemplate(message);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message);
     setCopied(true);
-    toast({
-      title: "Copied to clipboard",
-      status: "success",
-      duration: 2000,
-      isClosable: true,
-    });
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
     <Box
-      bg={isDark ? "#1a1a1a" : "#f9f9f9"}
-      color={isDark ? "#f0f0f0" : "#1a1a1a"}
+      bg="#1a1a1a"
+      color="#f0f0f0"
       p="1rem"
       borderRadius="8px"
-      border={`1px solid ${isDark ? "#333" : "#ccc"}`}
+      border="1px solid #333"
     >
       {sections.map((sec, idx) => (
         <div
           key={idx}
           style={{
-            background: isDark ? "#222" : "#fff",
-            border: `1px solid ${isDark ? "#555" : "#ddd"}`,
+            background: "#222",
+            border: "1px solid #555",
             borderRadius: "6px",
             marginBottom: "1rem",
             padding: "1rem",
@@ -75,8 +65,8 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
               fontWeight: 600,
               fontSize: "16px",
               marginBottom: "0.5rem",
-              color: isDark ? "#4dcfff" : "#0077cc",
-              borderBottom: `1px solid ${isDark ? "#444" : "#ccc"}`,
+              color: "#4dcfff",
+              borderBottom: "1px solid #444",
               paddingBottom: "4px",
             }}
           >
@@ -90,9 +80,9 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
                   <th
                     key={i}
                     style={{
-                      border: `1px solid ${isDark ? "#444" : "#ccc"}`,
-                      background: isDark ? "#333" : "#eee",
-                      color: isDark ? "#fff" : "#000",
+                      border: "1px solid #444",
+                      background: "#333",
+                      color: "#fff",
                       padding: "6px 10px",
                       fontSize: "14px",
                       textAlign: "left",
@@ -110,10 +100,10 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
                     <td
                       key={cIdx}
                       style={{
-                        border: `1px solid ${isDark ? "#444" : "#ddd"}`,
+                        border: "1px solid #444",
                         padding: "6px 10px",
                         fontSize: "13px",
-                        color: isDark ? "#ddd" : "#333",
+                        color: "#ddd",
                       }}
                     >
                       {val || "-"}

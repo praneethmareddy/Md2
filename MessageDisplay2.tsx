@@ -10,23 +10,27 @@ type Section = {
   rows: string[][];
 };
 
+// Updated parser to ignore lines before first @section
 const parseTemplate = (raw: string): Section[] => {
   const lines = raw.trim().split("\n").map(line => line.trim()).filter(Boolean);
   const sections: Section[] = [];
   let current: Section | null = null;
+  let parsing = false;
 
   for (const line of lines) {
     if (line.startsWith("@")) {
+      parsing = true;
       if (current) sections.push(current);
       current = { section: line.slice(1), headers: [], rows: [] };
-    } else if (current && current.headers.length === 0) {
+    } else if (parsing && current && current.headers.length === 0) {
       current.headers = line.split(",").map(h => h.trim());
-    } else if (current) {
+    } else if (parsing && current) {
       const values = line.split(",").map(v => v.trim());
       while (values.length < current.headers.length) values.push("");
       current.rows.push(values);
     }
   }
+
   if (current) sections.push(current);
   return sections;
 };

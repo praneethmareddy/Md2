@@ -1,8 +1,23 @@
+// components/MessageDisplay2.tsx
 import React, { useState } from "react";
-
-interface MessageDisplay2Props {
-  message: string;
-}
+import {
+  Box,
+  Text,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  VStack,
+  Stack,
+  IconButton,
+  useColorMode,
+  useToast,
+  useColorModeValue,
+  Divider,
+} from "@chakra-ui/react";
+import { CopyIcon, CheckIcon } from "@chakra-ui/icons";
 
 type Section = {
   section: string;
@@ -11,14 +26,14 @@ type Section = {
 };
 
 const parseTemplate = (raw: string): Section[] => {
-  const lines = raw.split("\n").map(line => line.trim()).filter(Boolean);
+  const lines = raw.trim().split("\n").map(line => line.trim()).filter(Boolean);
   const sections: Section[] = [];
   let current: Section | null = null;
 
   for (const line of lines) {
     if (line.startsWith("@")) {
       if (current) sections.push(current);
-      current = { section: line.slice(1).trim(), headers: [], rows: [] };
+      current = { section: line.slice(1), headers: [], rows: [] };
     } else if (current && current.headers.length === 0) {
       current.headers = line.split(",").map(h => h.trim());
     } else if (current) {
@@ -27,114 +42,112 @@ const parseTemplate = (raw: string): Section[] => {
       current.rows.push(values);
     }
   }
-
   if (current) sections.push(current);
   return sections;
 };
 
-const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
+const MessageDisplay2 = ({ message }: { message: string }) => {
   const [copied, setCopied] = useState(false);
-  const sections = parseTemplate(message);
+  const toast = useToast();
+
+  const bgColor = useColorModeValue("white", "gray.700");
+  const headerBg = useColorModeValue("gray.50", "gray.600");
+  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const scrollThumb = useColorModeValue("gray.300", "gray.500");
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message);
     setCopied(true);
+    toast({
+      title: "Configuration copied",
+      status: "success",
+      duration: 2000,
+      isClosable: true,
+      position: "bottom-right",
+    });
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const styles = {
-    container: {
-      backgroundColor: "#1a1a1a",
-      padding: "1rem",
-      color: "#f0f0f0",
-      fontFamily: "Arial, sans-serif",
-      borderRadius: "8px",
-      border: "1px solid #333",
-      overflowX: "auto" as const,
-    },
-    sectionBox: {
-      border: "1px solid #444",
-      borderRadius: "6px",
-      marginBottom: "1rem",
-      padding: "1rem",
-      backgroundColor: "#222",
-    },
-    sectionTitle: {
-      color: "#4dcfff",
-      fontSize: "16px",
-      fontWeight: 600,
-      borderBottom: "1px solid #555",
-      marginBottom: "0.75rem",
-      paddingBottom: "0.25rem",
-    },
-    table: {
-      width: "100%",
-      borderCollapse: "collapse" as const,
-    },
-    th: {
-      backgroundColor: "#333",
-      color: "#fff",
-      padding: "6px 10px",
-      border: "1px solid #555",
-      textAlign: "left" as const,
-      fontSize: "14px",
-    },
-    td: {
-      border: "1px solid #444",
-      padding: "6px 10px",
-      fontSize: "13px",
-      color: "#ddd",
-    },
-    copyButton: {
-      marginTop: "1rem",
-      padding: "8px 16px",
-      backgroundColor: "#4dcfff",
-      color: "#000",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontWeight: 600,
-    },
-    noData: {
-      color: "#aaa",
-      fontStyle: "italic",
-      padding: "1rem",
-    },
-  };
+  const sections = parseTemplate(message);
 
   return (
-    <div style={styles.container}>
-      {sections.length === 0 ? (
-        <div style={styles.noData}>No valid sections found in the message.</div>
-      ) : (
-        sections.map((sec, idx) => (
-          <div key={idx} style={styles.sectionBox}>
-            <div style={styles.sectionTitle}>@{sec.section}</div>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  {sec.headers.map((h, i) => (
-                    <th key={i} style={styles.th}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sec.rows.map((row, rIdx) => (
-                  <tr key={rIdx}>
-                    {row.map((val, cIdx) => (
-                      <td key={cIdx} style={styles.td}>{val || "-"}</td>
+    <Box position="relative" w="full">
+      <VStack spacing={4} align="stretch">
+        {sections.length === 0 ? (
+          <Text color="gray.500" fontStyle="italic">No sections found.</Text>
+        ) : (
+          sections.map((sec, idx) => (
+            <Box
+              key={idx}
+              borderWidth="1px"
+              borderColor={borderColor}
+              borderRadius="lg"
+              p={4}
+              bg={bgColor}
+              boxShadow="md"
+              overflowX="auto"
+              sx={{
+                "&::-webkit-scrollbar": {
+                  height: "6px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: scrollThumb,
+                  borderRadius: "10px",
+                },
+              }}
+            >
+              <Text
+                fontSize="sm"
+                fontWeight="semibold"
+                color="blue.400"
+                mb={2}
+                borderBottom="1px solid"
+                borderColor={borderColor}
+                pb={1}
+              >
+                @{sec.section}
+              </Text>
+
+              {sec.headers.length > 0 && sec.rows.length > 0 ? (
+                <Table variant="simple" size="sm" w="full">
+                  <Thead bg={headerBg}>
+                    <Tr>
+                      {sec.headers.map((h, i) => (
+                        <Th key={i} fontSize="xs" py={1}>{h}</Th>
+                      ))}
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {sec.rows.map((row, rIdx) => (
+                      <Tr key={rIdx}>
+                        {row.map((val, cIdx) => (
+                          <Td key={cIdx} fontSize="xs" py={1}>{val || "-"}</Td>
+                        ))}
+                      </Tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))
-      )}
-      <button onClick={handleCopy} style={styles.copyButton}>
-        {copied ? "Copied!" : "Copy Configuration"}
-      </button>
-    </div>
+                  </Tbody>
+                </Table>
+              ) : (
+                <Stack spacing={1}>
+                  {sec.rows.flat().map((line, i) => (
+                    <Text fontSize="sm" key={i}>{line}</Text>
+                  ))}
+                </Stack>
+              )}
+            </Box>
+          ))
+        )}
+        <Box textAlign="right">
+          <IconButton
+            aria-label="Copy message"
+            icon={copied ? <CheckIcon /> : <CopyIcon />}
+            colorScheme="blue"
+            size="sm"
+            onClick={handleCopy}
+          />
+        </Box>
+      </VStack>
+    </Box>
   );
 };
 

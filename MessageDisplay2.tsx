@@ -1,152 +1,140 @@
-// components/MessageDisplay2.tsx
+"use client";
+
 import React, { useState } from "react";
-import {
-  Box,
-  Text,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  VStack,
-  Stack,
-  IconButton,
-  useColorMode,
-  useToast,
-  useColorModeValue,
-  Divider,
-} from "@chakra-ui/react";
+import { Box, IconButton, useColorMode, useToast } from "@chakra-ui/react";
 import { CopyIcon, CheckIcon } from "@chakra-ui/icons";
 
-type Section = {
-  section: string;
-  headers: string[];
-  rows: string[][];
-};
-
-const parseTemplate = (raw: string): Section[] => {
+const parseTemplate = (raw: string) => {
   const lines = raw.trim().split("\n").map(line => line.trim()).filter(Boolean);
-  const sections: Section[] = [];
-  let current: Section | null = null;
+  const sections = [];
+  let current: { section: string; headers: string[]; rows: string[][] } | null = null;
 
-  for (const line of lines) {
+  for (let line of lines) {
     if (line.startsWith("@")) {
       if (current) sections.push(current);
       current = { section: line.slice(1), headers: [], rows: [] };
     } else if (current && current.headers.length === 0) {
       current.headers = line.split(",").map(h => h.trim());
     } else if (current) {
-      const values = line.split(",").map(v => v.trim());
-      while (values.length < current.headers.length) values.push("");
-      current.rows.push(values);
+      const row = line.split(",").map(v => v.trim());
+      while (row.length < current.headers.length) row.push("");
+      current.rows.push(row);
     }
   }
+
   if (current) sections.push(current);
   return sections;
 };
 
-const MessageDisplay2 = ({ message }: { message: string }) => {
+interface MessageDisplay2Props {
+  message: string;
+}
+
+const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
   const [copied, setCopied] = useState(false);
+  const { colorMode } = useColorMode();
   const toast = useToast();
 
-  const bgColor = useColorModeValue("white", "gray.700");
-  const headerBg = useColorModeValue("gray.50", "gray.600");
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const scrollThumb = useColorModeValue("gray.300", "gray.500");
+  const isDark = colorMode === "dark";
+  const sections = parseTemplate(message);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message);
     setCopied(true);
     toast({
-      title: "Configuration copied",
+      title: "Copied to clipboard",
       status: "success",
       duration: 2000,
       isClosable: true,
-      position: "bottom-right",
     });
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const sections = parseTemplate(message);
-
   return (
-    <Box position="relative" w="full">
-      <VStack spacing={4} align="stretch">
-        {sections.length === 0 ? (
-          <Text color="gray.500" fontStyle="italic">No sections found.</Text>
-        ) : (
-          sections.map((sec, idx) => (
-            <Box
-              key={idx}
-              borderWidth="1px"
-              borderColor={borderColor}
-              borderRadius="lg"
-              p={4}
-              bg={bgColor}
-              boxShadow="md"
-              overflowX="auto"
-              sx={{
-                "&::-webkit-scrollbar": {
-                  height: "6px",
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  background: scrollThumb,
-                  borderRadius: "10px",
-                },
-              }}
-            >
-              <Text
-                fontSize="sm"
-                fontWeight="semibold"
-                color="blue.400"
-                mb={2}
-                borderBottom="1px solid"
-                borderColor={borderColor}
-                pb={1}
-              >
-                @{sec.section}
-              </Text>
+    <Box
+      bg={isDark ? "#1a1a1a" : "#f9f9f9"}
+      color={isDark ? "#f0f0f0" : "#1a1a1a"}
+      p="1rem"
+      borderRadius="8px"
+      border={`1px solid ${isDark ? "#333" : "#ccc"}`}
+    >
+      {sections.map((sec, idx) => (
+        <div
+          key={idx}
+          style={{
+            background: isDark ? "#222" : "#fff",
+            border: `1px solid ${isDark ? "#555" : "#ddd"}`,
+            borderRadius: "6px",
+            marginBottom: "1rem",
+            padding: "1rem",
+            overflowX: "auto",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: "16px",
+              marginBottom: "0.5rem",
+              color: isDark ? "#4dcfff" : "#0077cc",
+              borderBottom: `1px solid ${isDark ? "#444" : "#ccc"}`,
+              paddingBottom: "4px",
+            }}
+          >
+            @{sec.section}
+          </div>
 
-              {sec.headers.length > 0 && sec.rows.length > 0 ? (
-                <Table variant="simple" size="sm" w="full">
-                  <Thead bg={headerBg}>
-                    <Tr>
-                      {sec.headers.map((h, i) => (
-                        <Th key={i} fontSize="xs" py={1}>{h}</Th>
-                      ))}
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {sec.rows.map((row, rIdx) => (
-                      <Tr key={rIdx}>
-                        {row.map((val, cIdx) => (
-                          <Td key={cIdx} fontSize="xs" py={1}>{val || "-"}</Td>
-                        ))}
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              ) : (
-                <Stack spacing={1}>
-                  {sec.rows.flat().map((line, i) => (
-                    <Text fontSize="sm" key={i}>{line}</Text>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                {sec.headers.map((h, i) => (
+                  <th
+                    key={i}
+                    style={{
+                      border: `1px solid ${isDark ? "#444" : "#ccc"}`,
+                      background: isDark ? "#333" : "#eee",
+                      color: isDark ? "#fff" : "#000",
+                      padding: "6px 10px",
+                      fontSize: "14px",
+                      textAlign: "left",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sec.rows.map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {row.map((val, cIdx) => (
+                    <td
+                      key={cIdx}
+                      style={{
+                        border: `1px solid ${isDark ? "#444" : "#ddd"}`,
+                        padding: "6px 10px",
+                        fontSize: "13px",
+                        color: isDark ? "#ddd" : "#333",
+                      }}
+                    >
+                      {val || "-"}
+                    </td>
                   ))}
-                </Stack>
-              )}
-            </Box>
-          ))
-        )}
-        <Box textAlign="right">
-          <IconButton
-            aria-label="Copy message"
-            icon={copied ? <CheckIcon /> : <CopyIcon />}
-            colorScheme="blue"
-            size="sm"
-            onClick={handleCopy}
-          />
-        </Box>
-      </VStack>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      <IconButton
+        icon={copied ? <CheckIcon /> : <CopyIcon />}
+        aria-label="Copy full config"
+        onClick={handleCopy}
+        size="sm"
+        colorScheme="blue"
+        variant="outline"
+        mt={2}
+      />
     </Box>
   );
 };

@@ -16,19 +16,16 @@ import {
 } from "@chakra-ui/react";
 import { CopyIcon, CheckIcon } from "@chakra-ui/icons";
 
-// Section type
 type Section = {
   section: string;
   headers: string[];
   rows: string[][];
 };
 
-// Props type
 interface MessageDisplay2Props {
   message: string;
 }
 
-// Template parser
 const parseTemplate = (raw: string): Section[] => {
   const lines = raw.trim().split("\n").map(line => line.trim()).filter(Boolean);
   const sections: Section[] = [];

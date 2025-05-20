@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, IconButton } from "@chakra-ui/react";
-import { CopyIcon, CheckIcon } from "@chakra-ui/icons";
 
 const parseTemplate = (raw: string) => {
   const lines = raw.trim().split("\n").map(line => line.trim()).filter(Boolean);
@@ -41,12 +39,15 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
   };
 
   return (
-    <Box
-      bg="#1a1a1a"
-      color="#f0f0f0"
-      p="1rem"
-      borderRadius="8px"
-      border="1px solid #333"
+    <div
+      style={{
+        backgroundColor: "#1a1a1a",
+        color: "#f0f0f0",
+        padding: "1rem",
+        borderRadius: "8px",
+        border: "1px solid #333",
+        fontFamily: "sans-serif"
+      }}
     >
       {sections.map((sec, idx) => (
         <div
@@ -116,16 +117,21 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
         </div>
       ))}
 
-      <IconButton
-        icon={copied ? <CheckIcon /> : <CopyIcon />}
-        aria-label="Copy full config"
+      <button
         onClick={handleCopy}
-        size="sm"
-        colorScheme="blue"
-        variant="outline"
-        mt={2}
-      />
-    </Box>
+        style={{
+          backgroundColor: copied ? "#2ecc71" : "#0077cc",
+          color: "#fff",
+          border: "none",
+          padding: "6px 12px",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontSize: "14px",
+        }}
+      >
+        {copied ? "Copied!" : "Copy"}
+      </button>
+    </div>
   );
 };
 

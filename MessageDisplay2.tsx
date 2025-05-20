@@ -46,21 +46,26 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
       position: "relative" as const,
       width: "100%",
       padding: "1rem",
+      backgroundColor: "#121212",
+      borderRadius: "12px",
+      boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+      color: "#ffffff",
+      fontFamily: "Segoe UI, sans-serif",
     },
-    card: {
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-      marginBottom: "1rem",
+    section: {
+      marginBottom: "1.5rem",
+      backgroundColor: "#1f1f1f",
+      borderRadius: "10px",
       padding: "1rem",
-      backgroundColor: "#f9f9f9",
-      overflowX: "auto" as const,
+      border: "1px solid #333",
     },
     sectionTitle: {
-      fontWeight: "bold" as const,
-      color: "#0070f3",
-      marginBottom: "8px",
+      fontWeight: "600",
+      color: "#4dabf7",
+      fontSize: "1rem",
+      marginBottom: "0.75rem",
+      borderBottom: "1px solid #333",
       paddingBottom: "4px",
-      borderBottom: "1px solid #ddd",
     },
     table: {
       width: "100%",
@@ -68,34 +73,37 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
       fontSize: "14px",
     },
     th: {
-      padding: "6px",
+      padding: "8px",
+      backgroundColor: "#2a2a2a",
+      color: "#ffffff",
+      borderBottom: "1px solid #444",
       textAlign: "left" as const,
-      backgroundColor: "#eee",
-      borderBottom: "1px solid #ddd",
     },
     td: {
-      padding: "6px",
-      textAlign: "left" as const,
-      borderBottom: "1px solid #eee",
+      padding: "8px",
+      borderBottom: "1px solid #333",
+      color: "#eee",
     },
     copyBtn: {
       position: "absolute" as const,
-      top: "0",
-      right: "0",
-      backgroundColor: "#0070f3",
+      top: "1rem",
+      right: "1rem",
+      backgroundColor: "#4dabf7",
       color: "#fff",
       border: "none",
-      padding: "6px 10px",
-      borderRadius: "4px",
+      padding: "8px 14px",
+      borderRadius: "6px",
       cursor: "pointer",
-      fontSize: "12px",
+      fontWeight: "bold" as const,
+      boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+      transition: "background 0.2s ease-in-out",
     },
   };
 
   return (
     <div style={styles.wrapper}>
       {sections.map((sec, idx) => (
-        <div key={idx} style={styles.card}>
+        <div key={idx} style={styles.section}>
           <div style={styles.sectionTitle}>@{sec.section}</div>
           <table style={styles.table}>
             <thead>
@@ -118,8 +126,8 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
         </div>
       ))}
       <button onClick={handleCopy} style={styles.copyBtn}>
-        {copied ? "Copied!" : "Copy"}
-      </button>
+        {copied ? "Copied!" : "Copy"
+      }</button>
     </div>
   );
 };

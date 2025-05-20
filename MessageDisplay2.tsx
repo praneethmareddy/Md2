@@ -14,28 +14,20 @@ const parseTemplate = (raw: string): Section[] => {
   const lines = raw.split("\n").map(line => line.trim()).filter(Boolean);
   const sections: Section[] = [];
   let current: Section | null = null;
-  let parsing = false;
 
   for (const line of lines) {
-    if (!parsing && line.includes("@")) {
-      parsing = true;
-    }
-
-    if (!parsing) continue;
-
-    const cleanLine = line.startsWith("@") ? line : line.replace(/^.*?@/, "@");
-
-    if (cleanLine.startsWith("@")) {
+    if (line.startsWith("@")) {
       if (current) sections.push(current);
-      current = { section: cleanLine.slice(1), headers: [], rows: [] };
+      current = { section: line.slice(1).trim(), headers: [], rows: [] };
     } else if (current && current.headers.length === 0) {
-      current.headers = cleanLine.split(",").map(h => h.trim());
+      current.headers = line.split(",").map(h => h.trim());
     } else if (current) {
-      const values = cleanLine.split(",").map(v => v.trim());
+      const values = line.split(",").map(v => v.trim());
       while (values.length < current.headers.length) values.push("");
       current.rows.push(values);
     }
   }
+
   if (current) sections.push(current);
   return sections;
 };
@@ -140,8 +132,8 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
         ))
       )}
       <button onClick={handleCopy} style={styles.copyButton}>
-        {copied ? "Copied!" : "Copy Configuration"
-      }</button>
+        {copied ? "Copied!" : "Copy Configuration"}
+      </button>
     </div>
   );
 };

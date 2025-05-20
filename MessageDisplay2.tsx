@@ -1,20 +1,8 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Text,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  VStack,
-  IconButton,
-  useColorMode,
-  useToast,
-  useColorModeValue,
-} from "@chakra-ui/react";
-import { CopyIcon, CheckIcon } from "@chakra-ui/icons";
+
+interface MessageDisplay2Props {
+  message: string;
+}
 
 type Section = {
   section: string;
@@ -22,17 +10,12 @@ type Section = {
   rows: string[][];
 };
 
-interface MessageDisplay2Props {
-  message: string;
-}
-
 const parseTemplate = (raw: string): Section[] => {
   const lines = raw.trim().split("\n").map(line => line.trim()).filter(Boolean);
   const sections: Section[] = [];
   let current: Section | null = null;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const line of lines) {
     if (line.startsWith("@")) {
       if (current) sections.push(current);
       current = { section: line.slice(1), headers: [], rows: [] };
@@ -49,108 +32,95 @@ const parseTemplate = (raw: string): Section[] => {
 };
 
 const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
-  const { colorMode } = useColorMode();
-  const toast = useToast();
   const [copied, setCopied] = useState(false);
-
-  const cardBg = useColorModeValue("white", "gray.700");
-  const tableHeaderBg = useColorModeValue("gray.50", "gray.600");
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const scrollThumb = useColorModeValue("gray.300", "gray.500");
+  const sections = parseTemplate(message);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message);
     setCopied(true);
-    toast({
-      title: "Configuration copied!",
-      status: "success",
-      duration: 2000,
-      isClosable: true,
-      position: "bottom",
-    });
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const sections = parseTemplate(message);
+  const styles = {
+    wrapper: {
+      position: "relative" as const,
+      width: "100%",
+      padding: "1rem",
+    },
+    card: {
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      marginBottom: "1rem",
+      padding: "1rem",
+      backgroundColor: "#f9f9f9",
+      overflowX: "auto" as const,
+    },
+    sectionTitle: {
+      fontWeight: "bold" as const,
+      color: "#0070f3",
+      marginBottom: "8px",
+      paddingBottom: "4px",
+      borderBottom: "1px solid #ddd",
+    },
+    table: {
+      width: "100%",
+      borderCollapse: "collapse" as const,
+      fontSize: "14px",
+    },
+    th: {
+      padding: "6px",
+      textAlign: "left" as const,
+      backgroundColor: "#eee",
+      borderBottom: "1px solid #ddd",
+    },
+    td: {
+      padding: "6px",
+      textAlign: "left" as const,
+      borderBottom: "1px solid #eee",
+    },
+    copyBtn: {
+      position: "absolute" as const,
+      top: "0",
+      right: "0",
+      backgroundColor: "#0070f3",
+      color: "#fff",
+      border: "none",
+      padding: "6px 10px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontSize: "12px",
+    },
+  };
 
   return (
-    <Box position="relative" w="full">
-      <Box _hover={{ ".copy-config-btn": { display: "inline-flex" } }} position="relative">
-        <VStack align="stretch" spacing={3} pt={2} pb={1}>
-          {sections.map((sec, idx) => (
-            <Box
-              key={idx}
-              borderWidth="1px"
-              borderColor={borderColor}
-              borderRadius="lg"
-              p={3}
-              bg={cardBg}
-              boxShadow="base"
-              overflowX="auto"
-              sx={{
-                "&::-webkit-scrollbar": {
-                  height: "6px",
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  background: scrollThumb,
-                  borderRadius: "10px",
-                },
-              }}
-            >
-              <Text
-                fontSize="sm"
-                fontWeight="semibold"
-                color="blue.400"
-                mb={2}
-                pb={1}
-                borderBottom="1px solid"
-                borderColor={borderColor}
-              >
-                @{sec.section}
-              </Text>
-
-              <Table variant="simple" size="sm" w="full">
-                <Thead bg={tableHeaderBg}>
-                  <Tr>
-                    {sec.headers.map((h, i) => (
-                      <Th key={i} fontSize="xs" py={1}>
-                        {h}
-                      </Th>
-                    ))}
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {sec.rows.map((row, rIdx) => (
-                    <Tr key={rIdx}>
-                      {row.map((val, cIdx) => (
-                        <Td key={cIdx} fontSize="xs" py={1}>
-                          {val || "-"}
-                        </Td>
-                      ))}
-                    </Tr>
+    <div style={styles.wrapper}>
+      {sections.map((sec, idx) => (
+        <div key={idx} style={styles.card}>
+          <div style={styles.sectionTitle}>@{sec.section}</div>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                {sec.headers.map((header, i) => (
+                  <th key={i} style={styles.th}>{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sec.rows.map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {row.map((cell, cIdx) => (
+                    <td key={cIdx} style={styles.td}>{cell || "-"}</td>
                   ))}
-                </Tbody>
-              </Table>
-            </Box>
-          ))}
-        </VStack>
-
-        <IconButton
-          icon={copied ? <CheckIcon /> : <CopyIcon />}
-          aria-label="Copy config"
-          size="sm"
-          variant="ghost"
-          colorScheme="blue"
-          className="copy-config-btn"
-          position="absolute"
-          top="-10px"
-          right="-8px"
-          display="none"
-          _hover={{ transform: "scale(1.1)" }}
-          onClick={handleCopy}
-        />
-      </Box>
-    </Box>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+      <button onClick={handleCopy} style={styles.copyBtn}>
+        {copied ? "Copied!" : "Copy"}
+      </button>
+    </div>
   );
 };
 

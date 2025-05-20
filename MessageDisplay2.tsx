@@ -43,12 +43,13 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
 
   const styles = {
     container: {
-      backgroundColor: "#000", // black background
+      backgroundColor: "#000",
       padding: "1rem",
-      color: "#fff",           // white text
-      fontFamily: "sans-serif",
+      color: "#fff",
+      fontFamily: "Arial, sans-serif",
       borderRadius: "6px",
       border: "1px solid #444",
+      overflowX: "auto" as const,
     },
     section: {
       marginBottom: "1.5rem",
@@ -60,6 +61,7 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
       fontWeight: "bold" as const,
       marginBottom: "0.5rem",
       color: "#4dcfff",
+      fontSize: "16px",
     },
     table: {
       width: "100%",
@@ -67,19 +69,21 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
     },
     th: {
       border: "1px solid #555",
-      padding: "6px",
+      padding: "8px",
       textAlign: "left" as const,
       backgroundColor: "#111",
       color: "#fff",
+      fontSize: "14px",
     },
     td: {
       border: "1px solid #444",
-      padding: "6px",
+      padding: "8px",
       color: "#ddd",
+      fontSize: "13px",
     },
     copyButton: {
       marginTop: "1rem",
-      padding: "8px 12px",
+      padding: "8px 14px",
       backgroundColor: "#4dcfff",
       color: "#000",
       border: "none",
@@ -87,33 +91,42 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
       cursor: "pointer",
       fontWeight: "bold" as const,
     },
+    noData: {
+      padding: "1rem",
+      color: "#aaa",
+      fontStyle: "italic",
+    },
   };
 
   return (
     <div style={styles.container}>
-      {sections.map((sec, idx) => (
-        <div key={idx} style={styles.section}>
-          <div style={styles.sectionTitle}>@{sec.section}</div>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {sec.headers.map((h, i) => (
-                  <th key={i} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sec.rows.map((row, rIdx) => (
-                <tr key={rIdx}>
-                  {row.map((val, cIdx) => (
-                    <td key={cIdx} style={styles.td}>{val || "-"}</td>
+      {sections.length === 0 ? (
+        <div style={styles.noData}>No valid sections found in the message.</div>
+      ) : (
+        sections.map((sec, idx) => (
+          <div key={idx} style={styles.section}>
+            <div style={styles.sectionTitle}>@{sec.section}</div>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  {sec.headers.map((h, i) => (
+                    <th key={i} style={styles.th}>{h}</th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
+              </thead>
+              <tbody>
+                {sec.rows.map((row, rIdx) => (
+                  <tr key={rIdx}>
+                    {row.map((val, cIdx) => (
+                      <td key={cIdx} style={styles.td}>{val || "-"}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))
+      )}
       <button onClick={handleCopy} style={styles.copyButton}>
         {copied ? "Copied!" : "Copy"}
       </button>

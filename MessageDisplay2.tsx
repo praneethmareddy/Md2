@@ -11,35 +11,31 @@ type Section = {
 };
 
 const parseTemplate = (raw: string): Section[] => {
-  const lines = raw
-    .split("\n")
-    .map(line => line.trim())
-    .filter(Boolean);
-
+  const lines = raw.split("\n").map(line => line.trim()).filter(Boolean);
   const sections: Section[] = [];
   let current: Section | null = null;
-  let parsingStarted = false;
+  let parsing = false;
 
   for (const line of lines) {
-    const cleanLine = line.replace(/^.*?@/, "@"); // normalize lines with text before @
+    if (!parsing && line.includes("@")) {
+      parsing = true;
+    }
+
+    if (!parsing) continue;
+
+    const cleanLine = line.startsWith("@") ? line : line.replace(/^.*?@/, "@");
 
     if (cleanLine.startsWith("@")) {
-      parsingStarted = true;
       if (current) sections.push(current);
-      current = {
-        section: cleanLine.slice(1),
-        headers: [],
-        rows: [],
-      };
-    } else if (parsingStarted && current && current.headers.length === 0) {
-      current.headers = line.split(",").map(h => h.trim());
-    } else if (parsingStarted && current) {
-      const values = line.split(",").map(v => v.trim());
+      current = { section: cleanLine.slice(1), headers: [], rows: [] };
+    } else if (current && current.headers.length === 0) {
+      current.headers = cleanLine.split(",").map(h => h.trim());
+    } else if (current) {
+      const values = cleanLine.split(",").map(v => v.trim());
       while (values.length < current.headers.length) values.push("");
       current.rows.push(values);
     }
   }
-
   if (current) sections.push(current);
   return sections;
 };
@@ -56,58 +52,61 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
 
   const styles = {
     container: {
-      backgroundColor: "#000",
+      backgroundColor: "#1a1a1a",
       padding: "1rem",
-      color: "#fff",
+      color: "#f0f0f0",
       fontFamily: "Arial, sans-serif",
-      borderRadius: "6px",
-      border: "1px solid #444",
+      borderRadius: "8px",
+      border: "1px solid #333",
       overflowX: "auto" as const,
     },
-    section: {
-      marginBottom: "1.5rem",
-      padding: "1rem",
+    sectionBox: {
       border: "1px solid #444",
-      borderRadius: "4px",
+      borderRadius: "6px",
+      marginBottom: "1rem",
+      padding: "1rem",
+      backgroundColor: "#222",
     },
     sectionTitle: {
-      fontWeight: "bold" as const,
-      marginBottom: "0.5rem",
       color: "#4dcfff",
       fontSize: "16px",
+      fontWeight: 600,
+      borderBottom: "1px solid #555",
+      marginBottom: "0.75rem",
+      paddingBottom: "0.25rem",
     },
     table: {
       width: "100%",
       borderCollapse: "collapse" as const,
     },
     th: {
-      border: "1px solid #555",
-      padding: "8px",
-      textAlign: "left" as const,
-      backgroundColor: "#111",
+      backgroundColor: "#333",
       color: "#fff",
+      padding: "6px 10px",
+      border: "1px solid #555",
+      textAlign: "left" as const,
       fontSize: "14px",
     },
     td: {
       border: "1px solid #444",
-      padding: "8px",
-      color: "#ddd",
+      padding: "6px 10px",
       fontSize: "13px",
+      color: "#ddd",
     },
     copyButton: {
       marginTop: "1rem",
-      padding: "8px 14px",
+      padding: "8px 16px",
       backgroundColor: "#4dcfff",
       color: "#000",
       border: "none",
       borderRadius: "4px",
       cursor: "pointer",
-      fontWeight: "bold" as const,
+      fontWeight: 600,
     },
     noData: {
-      padding: "1rem",
       color: "#aaa",
       fontStyle: "italic",
+      padding: "1rem",
     },
   };
 
@@ -117,7 +116,7 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
         <div style={styles.noData}>No valid sections found in the message.</div>
       ) : (
         sections.map((sec, idx) => (
-          <div key={idx} style={styles.section}>
+          <div key={idx} style={styles.sectionBox}>
             <div style={styles.sectionTitle}>@{sec.section}</div>
             <table style={styles.table}>
               <thead>
@@ -141,8 +140,8 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
         ))
       )}
       <button onClick={handleCopy} style={styles.copyButton}>
-        {copied ? "Copied!" : "Copy"}
-      </button>
+        {copied ? "Copied!" : "Copy Configuration"
+      }</button>
     </div>
   );
 };

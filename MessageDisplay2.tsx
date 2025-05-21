@@ -4,31 +4,45 @@ import React, { useState, useEffect } from "react";
 
 const parseTemplate = (raw: string) => {
   const lines = raw
+    .trim()
     .split("\n")
     .map(line => line.trim())
     .filter(Boolean);
 
+  console.log("Raw lines:", lines);
+
   const sections = [];
-  let current = null;
-  let foundFirstSection = false;
+  let current: { section: string; headers: string[]; rows: string[][] } | null = null;
+  let started = false;
 
   for (let line of lines) {
     if (line.startsWith("@")) {
-      foundFirstSection = true;
-      if (current) sections.push(current);
-      current = { section: line.slice(1).trim(), headers: [], rows: [] };
-    } else if (!foundFirstSection) {
-      continue; // skip lines before first @section
+      started = true;
+      if (current) {
+        sections.push(current);
+        console.log("Completed section:", current);
+      }
+      current = { section: line.slice(1), headers: [], rows: [] };
+      console.log("New section started:", current.section);
+    } else if (!started) {
+      // Skip lines before first @section
+      continue;
     } else if (current && current.headers.length === 0) {
       current.headers = line.split(",").map(h => h.trim());
+      console.log("Parsed headers:", current.headers);
     } else if (current) {
-      const row = line.split(",").map(v => v.trim());
-      while (row.length < current.headers.length) row.push(""); // fill missing columns
+      const row = line.split(",").map(val => val.trim());
+      while (row.length < current.headers.length) row.push(""); // Fill missing values
       current.rows.push(row);
+      console.log("Parsed row:", row);
     }
   }
 
-  if (current) sections.push(current);
+  if (current) {
+    sections.push(current);
+    console.log("Final section:", current);
+  }
+
   return sections;
 };
 
@@ -37,25 +51,44 @@ interface MessageDisplay2Props {
 }
 
 const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
-  const [sections, setSections] = useState([]);
+  const [copied, setCopied] = useState(false);
+  const [sections, setSections] = useState<
+    { section: string; headers: string[]; rows: string[][] }[]
+  >([]);
 
   useEffect(() => {
     const parsed = parseTemplate(message);
     setSections(parsed);
   }, [message]);
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   return (
-    <div style={{ background: "#111", color: "#f0f0f0", padding: "1rem" }}>
+    <div style={{ background: "#111", color: "#f0f0f0", padding: "1rem", borderRadius: "8px" }}>
       {sections.length === 0 && <div>No valid sections found.</div>}
 
       {sections.map((sec, idx) => (
-        <div key={idx} style={{ marginBottom: "2rem" }}>
-          <h3 style={{ color: "#4dcfff", marginBottom: "0.5rem" }}>@{sec.section}</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div key={idx} style={{ marginBottom: "2rem", border: "1px solid #444", padding: "1rem" }}>
+          <h3 style={{ color: "#4dcfff", borderBottom: "1px solid #444", paddingBottom: "4px" }}>
+            @{sec.section}
+          </h3>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
             <thead>
               <tr>
                 {sec.headers.map((h, i) => (
-                  <th key={i} style={{ border: "1px solid #333", padding: "6px", background: "#222" }}>
+                  <th
+                    key={i}
+                    style={{
+                      border: "1px solid #555",
+                      background: "#222",
+                      padding: "6px 10px",
+                      textAlign: "left",
+                    }}
+                  >
                     {h}
                   </th>
                 ))}
@@ -65,7 +98,10 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
               {sec.rows.map((row, rIdx) => (
                 <tr key={rIdx}>
                   {row.map((val, cIdx) => (
-                    <td key={cIdx} style={{ border: "1px solid #333", padding: "6px" }}>
+                    <td
+                      key={cIdx}
+                      style={{ border: "1px solid #333", padding: "6px 10px", color: "#ccc" }}
+                    >
                       {val || "-"}
                     </td>
                   ))}
@@ -75,6 +111,19 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
           </table>
         </div>
       ))}
+
+      <button
+        onClick={handleCopy}
+        style={{
+          padding: "8px 12px",
+          background: copied ? "green" : "#444",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+        }}
+      >
+        {copied ? "Copied!" : "Copy"}
+      </button>
     </div>
   );
 };

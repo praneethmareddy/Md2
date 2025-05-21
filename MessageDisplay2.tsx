@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 const parseTemplate = (raw: string) => {
   const firstAt = raw.indexOf("@");
@@ -32,74 +32,33 @@ const parseTemplate = (raw: string) => {
   return sections;
 };
 
-interface MessageDisplay2Props {
+interface MessageDisplayProps {
   message: string;
 }
 
-const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
-  const [sections, setSections] = useState<
-    { section: string; headers: string[]; rows: string[][] }[]
-  >([]);
-
-  useEffect(() => {
-    setSections(parseTemplate(message));
-  }, [message]);
+const MessageDisplay: React.FC<MessageDisplayProps> = ({ message }) => {
+  const sections = parseTemplate(message);
 
   return (
-    <div
-      style={{
-        background: "#111",
-        color: "#f0f0f0",
-        padding: "1rem",
-        borderRadius: "8px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      {sections.length === 0 && <div>No valid sections found.</div>}
+    <div style={{ background: "#111", color: "#eee", padding: "1rem", borderRadius: 8, fontFamily: "Arial" }}>
+      {sections.length === 0 && <p>No sections found.</p>}
 
-      {sections.map((sec, idx) => (
-        <div
-          key={idx}
-          style={{
-            marginBottom: "2rem",
-            border: "1px solid #444",
-            borderRadius: "6px",
-            padding: "1rem",
-            background: "#222",
-          }}
-        >
-          <h3
-            style={{
-              color: "#4dcfff",
-              borderBottom: "1px solid #444",
-              paddingBottom: "4px",
-              marginBottom: "1rem",
-            }}
-          >
-            @{sec.section}
-          </h3>
+      {sections.map(({ section, headers, rows }, i) => (
+        <div key={i} style={{ marginBottom: "1.5rem", padding: "1rem", background: "#222", borderRadius: 6 }}>
+          <h3 style={{ color: "#4dcfff", marginBottom: "0.8rem" }}>@{section}</h3>
 
-          {sec.rows.map((row, rIdx) => (
+          {rows.map((row, rowIndex) => (
             <div
-              key={rIdx}
+              key={rowIndex}
               style={{
-                marginBottom: "0.75rem",
+                marginBottom: "0.6rem",
                 paddingLeft: "1rem",
+                borderLeft: "3px solid #4dcfff",
               }}
             >
-              {sec.headers.map((header, hIdx) => (
-                <div
-                  key={hIdx}
-                  style={{
-                    display: "flex",
-                    gap: "1rem",
-                    fontSize: "14px",
-                    color: row[hIdx] === "-" ? "#777" : "#ddd",
-                    fontStyle: row[hIdx] === "-" ? "italic" : "normal",
-                  }}
-                >
-                  <strong style={{ minWidth: "100px" }}>{header}:</strong>
-                  <span>{row[hIdx]}</span>
+              {headers.map((param, idx) => (
+                <div key={idx} style={{ lineHeight: 1.4 }}>
+                  <strong>{param || "-"}</strong>: {row[idx]}
                 </div>
               ))}
             </div>
@@ -110,4 +69,4 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
   );
 };
 
-export default MessageDisplay2;
+export default MessageDisplay;

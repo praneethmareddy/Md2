@@ -3,45 +3,29 @@
 import React, { useState, useEffect } from "react";
 
 const parseTemplate = (raw: string) => {
-  console.log("Raw input:", raw);
-
-  const lines = raw
-    .trim()
-    .split("\n")
-    .map(line => line.trim())
-    .filter(Boolean);
-
-  console.log("Trimmed non-empty lines:", lines);
-
+  const lines = raw.split("\n").map(line => line.trim());
   const sections = [];
-  let current: { section: string; headers: string[]; rows: string[][] } | null = null;
+  let current = null;
+  let beforeSections = [];
 
   for (let line of lines) {
+    if (!line) continue; // skip empty lines
     if (line.startsWith("@")) {
-      if (current) {
-        sections.push(current);
-        console.log("Completed section:", current);
-      }
+      if (current) sections.push(current);
       current = { section: line.slice(1), headers: [], rows: [] };
-      console.log("New section started:", current.section);
-    } else if (current && current.headers.length === 0) {
+    } else if (!current) {
+      beforeSections.push(line);
+    } else if (current.headers.length === 0) {
       current.headers = line.split(",").map(h => h.trim());
-      console.log("Headers parsed:", current.headers);
-    } else if (current) {
+    } else {
       const row = line.split(",").map(v => v.trim());
-      while (row.length < current.headers.length) row.push(""); // pad
+      while (row.length < current.headers.length) row.push("");
       current.rows.push(row);
-      console.log("Row added:", row);
     }
   }
 
-  if (current) {
-    sections.push(current);
-    console.log("Final section:", current);
-  }
-
-  console.log("All parsed sections:", sections);
-  return sections;
+  if (current) sections.push(current);
+  return { beforeSections, sections };
 };
 
 interface MessageDisplay2Props {
@@ -49,46 +33,28 @@ interface MessageDisplay2Props {
 }
 
 const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
-  const [copied, setCopied] = useState(false);
-  const [sections, setSections] = useState<
-    { section: string; headers: string[]; rows: string[][] }[]
-  >([]);
+  const [parsed, setParsed] = useState<{ beforeSections: string[]; sections: any[] }>({ beforeSections: [], sections: [] });
 
   useEffect(() => {
-    const parsed = parseTemplate(message);
-    setSections(parsed);
+    const result = parseTemplate(message);
+    console.log("Parsed result:", result);
+    setParsed(result);
   }, [message]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(message);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
   return (
-    <div style={{ background: "#111", color: "#f0f0f0", padding: "1rem", borderRadius: "8px" }}>
-      {sections.length === 0 && <div>No valid sections found.</div>}
+    <div style={{ background: "#111", color: "#eee", padding: "1rem", fontFamily: "monospace" }}>
+      {parsed.beforeSections.map((line, i) => (
+        <p key={i}>{line}</p>
+      ))}
 
-      {sections.map((sec, idx) => (
-        <div key={idx} style={{ marginBottom: "2rem", border: "1px solid #444", padding: "1rem" }}>
-          <h3 style={{ color: "#4dcfff", borderBottom: "1px solid #444", paddingBottom: "4px" }}>
-            @{sec.section}
-          </h3>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
+      {parsed.sections.map((sec, idx) => (
+        <div key={idx} style={{ marginTop: "1.5rem", background: "#222", padding: "1rem", borderRadius: "8px" }}>
+          <h3 style={{ color: "#4dcfff", marginBottom: "0.5rem" }}>@{sec.section}</h3>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
                 {sec.headers.map((h, i) => (
-                  <th
-                    key={i}
-                    style={{
-                      border: "1px solid #555",
-                      background: "#222",
-                      padding: "6px 10px",
-                      textAlign: "left",
-                    }}
-                  >
-                    {h}
-                  </th>
+                  <th key={i} style={{ border: "1px solid #333", padding: "6px", background: "#333" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -96,12 +62,7 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
               {sec.rows.map((row, rIdx) => (
                 <tr key={rIdx}>
                   {row.map((val, cIdx) => (
-                    <td
-                      key={cIdx}
-                      style={{ border: "1px solid #333", padding: "6px 10px", color: "#ccc" }}
-                    >
-                      {val || "-"}
-                    </td>
+                    <td key={cIdx} style={{ border: "1px solid #444", padding: "6px" }}>{val || "-"}</td>
                   ))}
                 </tr>
               ))}
@@ -110,18 +71,9 @@ const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
         </div>
       ))}
 
-      <button
-        onClick={handleCopy}
-        style={{
-          padding: "8px 12px",
-          background: copied ? "green" : "#444",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-        }}
-      >
-        {copied ? "Copied!" : "Copy"}
-      </button>
+      {parsed.sections.length === 0 && (
+        <p style={{ marginTop: "1rem", color: "#888" }}>No sections found.</p>
+      )}
     </div>
   );
 };

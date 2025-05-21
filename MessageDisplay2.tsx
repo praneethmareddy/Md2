@@ -3,46 +3,32 @@
 import React, { useState, useEffect } from "react";
 
 const parseTemplate = (raw: string) => {
-  const lines = raw
-    .trim()
-    .split("\n")
-    .map(line => line.trim())
-    .filter(Boolean);
+  const firstAt = raw.indexOf("@");
+  if (firstAt === -1) return [];
 
-  console.log("Raw lines:", lines);
+  const content = raw.slice(firstAt);
+
+  const lines = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   const sections = [];
   let current: { section: string; headers: string[]; rows: string[][] } | null = null;
-  let started = false;
 
   for (let line of lines) {
     if (line.startsWith("@")) {
-      started = true;
-      if (current) {
-        sections.push(current);
-        console.log("Completed section:", current);
-      }
-      current = { section: line.slice(1), headers: [], rows: [] };
-      console.log("New section started:", current.section);
-    } else if (!started) {
-      // Skip lines before first @section
-      continue;
+      if (current) sections.push(current);
+      current = { section: line.slice(1).trim(), headers: [], rows: [] };
     } else if (current && current.headers.length === 0) {
-      current.headers = line.split(",").map(h => h.trim());
-      console.log("Parsed headers:", current.headers);
+      current.headers = line.split(",").map((h) => h.trim());
     } else if (current) {
-      const row = line.split(",").map(val => val.trim());
-      while (row.length < current.headers.length) row.push(""); // Fill missing values
+      const row = line.split(",").map((v) => (v.trim() === "" ? "-" : v.trim()));
+      while (row.length < current.headers.length) row.push("-");
       current.rows.push(row);
-      console.log("Parsed row:", row);
     }
   }
-
-  if (current) {
-    sections.push(current);
-    console.log("Final section:", current);
-  }
-
+  if (current) sections.push(current);
   return sections;
 };
 
@@ -51,79 +37,75 @@ interface MessageDisplay2Props {
 }
 
 const MessageDisplay2: React.FC<MessageDisplay2Props> = ({ message }) => {
-  const [copied, setCopied] = useState(false);
   const [sections, setSections] = useState<
     { section: string; headers: string[]; rows: string[][] }[]
   >([]);
 
   useEffect(() => {
-    const parsed = parseTemplate(message);
-    setSections(parsed);
+    setSections(parseTemplate(message));
   }, [message]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(message);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
   return (
-    <div style={{ background: "#111", color: "#f0f0f0", padding: "1rem", borderRadius: "8px" }}>
+    <div
+      style={{
+        background: "#111",
+        color: "#f0f0f0",
+        padding: "1rem",
+        borderRadius: "8px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
       {sections.length === 0 && <div>No valid sections found.</div>}
 
       {sections.map((sec, idx) => (
-        <div key={idx} style={{ marginBottom: "2rem", border: "1px solid #444", padding: "1rem" }}>
-          <h3 style={{ color: "#4dcfff", borderBottom: "1px solid #444", paddingBottom: "4px" }}>
+        <div
+          key={idx}
+          style={{
+            marginBottom: "2rem",
+            border: "1px solid #444",
+            borderRadius: "6px",
+            padding: "1rem",
+            background: "#222",
+          }}
+        >
+          <h3
+            style={{
+              color: "#4dcfff",
+              borderBottom: "1px solid #444",
+              paddingBottom: "4px",
+              marginBottom: "1rem",
+            }}
+          >
             @{sec.section}
           </h3>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
-            <thead>
-              <tr>
-                {sec.headers.map((h, i) => (
-                  <th
-                    key={i}
-                    style={{
-                      border: "1px solid #555",
-                      background: "#222",
-                      padding: "6px 10px",
-                      textAlign: "left",
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sec.rows.map((row, rIdx) => (
-                <tr key={rIdx}>
-                  {row.map((val, cIdx) => (
-                    <td
-                      key={cIdx}
-                      style={{ border: "1px solid #333", padding: "6px 10px", color: "#ccc" }}
-                    >
-                      {val || "-"}
-                    </td>
-                  ))}
-                </tr>
+
+          {sec.rows.map((row, rIdx) => (
+            <div
+              key={rIdx}
+              style={{
+                marginBottom: "0.75rem",
+                paddingLeft: "1rem",
+              }}
+            >
+              {sec.headers.map((header, hIdx) => (
+                <div
+                  key={hIdx}
+                  style={{
+                    display: "flex",
+                    gap: "1rem",
+                    fontSize: "14px",
+                    color: row[hIdx] === "-" ? "#777" : "#ddd",
+                    fontStyle: row[hIdx] === "-" ? "italic" : "normal",
+                  }}
+                >
+                  <strong style={{ minWidth: "100px" }}>{header}:</strong>
+                  <span>{row[hIdx]}</span>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ))}
         </div>
       ))}
-
-      <button
-        onClick={handleCopy}
-        style={{
-          padding: "8px 12px",
-          background: copied ? "green" : "#444",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-        }}
-      >
-        {copied ? "Copied!" : "Copy"}
-      </button>
     </div>
   );
 };
